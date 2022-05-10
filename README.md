@@ -1,4 +1,4 @@
-# Parallel-Machines-scheduling
+# Parallel-Machines-Scheduling
 Parallel machines schduling using different metaheuristic
 Local search
 Branch and Bound- Yet to implement
