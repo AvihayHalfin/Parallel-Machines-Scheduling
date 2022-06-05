@@ -8,16 +8,17 @@ import math
 
 # Constants
 
-MAX_NUM_OF_JOBS = 100
+MAX_NUM_OF_JOBS = 100000
 
-NUM_OF_GEN = 40
-NUM_OF_CHROMOZOMS = 100
+NUM_OF_GEN = 100
+NUM_OF_CHROMOSOMES = 150
 
 file_times = (time.time() / 10000)
 
 start_time = time.time()
 
 debug_file = open("debugout.txt", "w")
+test_file = open("test file", "w")
 
 # returns the total number of machines that will be in use , and a raw jobs data
 def handleInput():
@@ -82,11 +83,11 @@ num_of_machines, raw_jobs = handleInput()
 num_of_jobs = len(raw_jobs)
 
 # output file and first prints
-out_file = open("output_" + str(NUM_OF_CHROMOZOMS) + "chromozoms_" + str(NUM_OF_GEN) + "generations_" + str(
+out_file = open("output_" + str(NUM_OF_CHROMOSOMES) + "chromosomes_" + str(NUM_OF_GEN) + "generations_" + str(
     num_of_machines) + "machines_" + str(num_of_jobs) + "jobs_" + str(file_times) + ".txt", "w")
 
 print("Number of Machines:", num_of_machines, file=out_file)
-print(num_of_jobs, "jobs:", NUM_OF_CHROMOZOMS, "chromozoms", NUM_OF_GEN, "generations", file=out_file)
+print(num_of_jobs, "jobs:", NUM_OF_CHROMOSOMES, "chromosomes", NUM_OF_GEN, "generations", file=out_file)
 for job in raw_jobs:
     print(job, file=out_file)
 
@@ -132,11 +133,11 @@ def createChrom():
     removeAllJobs()
     return ch
 
-# creating a population - returning a list (of lists) of NUM_OF_CHROMOZOMS chromosomes
+# creating a population - returning a list (of lists) of NUM_OF_CHROMOSOMES chromosomes
 def createPop():
     global chrom, eval
     pop = []
-    for i in range(NUM_OF_CHROMOZOMS):
+    for i in range(NUM_OF_CHROMOSOMES):
         curr = []
         legal = False
 
@@ -175,7 +176,7 @@ def removeAllJobs():
             machine.removeJob(num)
 
 
-# evalutation : at the moment is just the makespan of a single chromosome
+# evaluation : at the moment is just the makespan of a single chromosome
 def evaluateOne(chromosome: list):
     for i in range(len(chromosome)):
         machines_list[chromosome[i]].addJob(jobs_list[i])
@@ -186,15 +187,15 @@ def evaluateOne(chromosome: list):
 
 
 # current fitness function = the difference between chromosome's makespan and the worst chromosome's makespan
-# def updateFitness(chormosome,worst):
-#    fitness = (worst-chormosome[1])+1
+# def updateFitness(chromosome,worst):
+#    fitness = (worst-chromosome[1])+1
 #
-#    chormosome.append(fitness)
+#    chromosome.append(fitness)
 #    return fitness
 
-#def updateFitness(chormosome, worst):
-#    fitness = 1 / (chormosome[1])
-#    chormosome.append(fitness)
+#def updateFitness(chromosome, worst):
+#    fitness = 1 / (chromosome[1])
+#    chromosome.append(fitness)
 #    return fitness
 
 
@@ -219,7 +220,7 @@ def updateProb(chromosome, sum):
     return prob
 
 
-# go over popluation and calculate each one's fitness
+# go over population and calculate each one's fitness
 def evaluateAll(population: list):
     worst = 0
     best = sys.maxsize
@@ -295,6 +296,7 @@ def xo(mom: list, eval_mom, dad: list, eval_dad, slices):
 
         legal = legal_son and legal_daughter
 
+
     return son, eval_son, daughter, eval_daughter
 
 
@@ -302,24 +304,41 @@ def xo(mom: list, eval_mom, dad: list, eval_dad, slices):
 def reproduce(population: list):
     new_gen = []
     probs = []
+    print("Population information: ", file=test_file)
+
     for p in population:
         probs.append(p[3])
+        print("[", "".join((map(str, p[0]))), ", ", p[1], ", ", p[3], "]", file=test_file)
     while len(new_gen) != len(probs):
+
         parents = selection(probs)
+        dad = population[parents[0]]
+        mom = population[parents[1]]
+        if (mom == dad):
+            continue
+        print("The selected two chromosomes are: \n", file=test_file)
+        print("".join(map(str, dad[0])), ", ", dad[3], file=test_file)
+        print("".join((map(str, mom[0]))), ", ", mom[3], file=test_file)
+        print("\nThe indices of the selected chromosomes are: ", file=test_file)
+        print(population.index(dad), file=test_file)
+        print(population.index(mom), file=test_file)
         son, eval_son, daughter, eval_daughter = xo(population[parents[0]][0], population[parents[0]][1],
                                                     population[parents[1]][0], population[parents[1]][1], 2)
         new_gen.append([son, eval_son])
         new_gen.append([daughter, eval_daughter])
-
+        print("\n The generated chromosomes from the crossover are: \n", file=test_file)
+        print("".join(map(str, son)), file=test_file)
+        print("".join((map(str, daughter))), file=test_file)
+        print("************", file=test_file)
     # mutation
     # lets say 2.5% of the population gets mutated
-    how_many_to_mutate = int(NUM_OF_CHROMOZOMS * (1 / 100))
-    t = [i for i in range(NUM_OF_CHROMOZOMS)]
+    how_many_to_mutate = int(NUM_OF_CHROMOSOMES * (1 / 100))
+    t = [i for i in range(NUM_OF_CHROMOSOMES)]
     # choose percent of the population randomly, uniformly
     indices_to_mutate = choice(t, how_many_to_mutate, replace=False)
     for i in range(len(indices_to_mutate)):
         mutate(new_gen[indices_to_mutate[i]])
-
+        print(mutate(new_gen[indices_to_mutate[i]]))
     evaluateAll(new_gen)
 
     return new_gen
@@ -392,7 +411,7 @@ def printChromQual(chromosome: list):
 
         sum += jobs_list[i].process_time
         print("Makespan is :", sum)
-        printMachineStatOut()
+    printMachineStatOut()
     print("Optimal solution (sum/num_of_jobs) could be :", sum / num_of_machines, file=out_file)
     print("------------------------------------------------\n", file=out_file)
 
@@ -401,7 +420,7 @@ def printChromQual(chromosome: list):
 def genetic():
     print("Number of jobs:", len(jobs_list), file=out_file)
     print("Number of machines:", len(machines_list), file=out_file)
-    print("Number of chromosomes:", NUM_OF_CHROMOZOMS, file=out_file)
+    print("Number of chromosomes:", NUM_OF_CHROMOSOMES, file=out_file)
     print("Number of generations to be created:", NUM_OF_GEN, file=out_file)
     print("First population:", file=out_file)
     pop = createPop()
@@ -422,14 +441,17 @@ def genetic():
     for i in range(NUM_OF_GEN):
         new_gg = reproduce(pop)
         pop = new_gg
-
-        # print every 5 generations
-        if (i % 5 == 0):
+        if p[1] < best:
+            best = p[1]
+            best_chromosome = p
+        # print every 50 generations
+        if (i % 10 == 0):
             print("New generation, number:", i, file=out_file)
-
+        if (i % 10 == 0):
+            print("New generation, number:", i, file=test_file)
         for p in pop:
-            #if (i % 10 == 0):
-            if (i == 1):
+            if (i % 10 == 0):
+            #if (i == 1):
                 #print(p, file=out_file)
                 print("[", "".join(map(str, p[0])), ",", p[1], ", ", p[3], "]", file=out_file)
             if p[1] < best:
@@ -445,8 +467,8 @@ def genetic():
     #printMachineStatOut()
 
 
-
 genetic()
 print("---Finished in %s seconds ---" % (time.time() - start_time),file=out_file)
 debug_file.close()
+test_file.close()
 out_file.close()
