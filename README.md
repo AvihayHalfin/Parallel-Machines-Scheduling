@@ -1,5 +1,6 @@
 # Parallel-Machines-Scheduling
 Parallel machines schduling using different metaheuristic
 Local search
-Branch and Bound- Yet to implement
 Genetic algorithm
+.Branch and Bound- Yet to implement
+
